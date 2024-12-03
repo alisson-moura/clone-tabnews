@@ -1,0 +1,16 @@
+{
+  "name": "clone-tabnews",
+  "version": "1.0.0",
+  "description": "Projeto de estudo desenvolvido durante o curso.dev, que consiste na implementação de um fórum online inspirado no TabNews. O objetivo é aplicar e consolidar conhecimentos práticos de desenvolvimento web, abordando tecnologias modernas e boas práticas de programação.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev"
+  },
+  "author": "alisson-moura",
+  "license": "MIT",
+  "dependencies": {
+    "next": "^13.1.6",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}
