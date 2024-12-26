@@ -4,7 +4,10 @@
   "description": "Projeto de estudo desenvolvido durante o curso.dev, que consiste na implementação de um fórum online inspirado no TabNews. O objetivo é aplicar e consolidar conhecimentos práticos de desenvolvimento web, abordando tecnologias modernas e boas práticas de programação.",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev",
+    "dev": "npm run services:up && next dev",
+    "services:up": "docker compose -f infra/compose.yaml up -d",
+    "services:stop": "docker compose -f infra/compose.yaml stop",
+    "services:down": "docker compose -f infra/compose.yaml down",
     "lint:check": "prettier --check .",
     "lint:fix": "prettier --write .",
     "test": "jest",
