@@ -3,10 +3,6 @@ import migrationRunner from "node-pg-migrate";
 import database from "infra/database";
 
 export default async function migrations(request, response) {
-  if (request.method != "GET" && request.method != "POST") {
-    response.status(405).end();
-  }
-
   const dbClient = await database.getNewClient();
   const defaultMigrationRunnerConfig = {
     dbClient,
@@ -35,4 +31,5 @@ export default async function migrations(request, response) {
     const statusCode = migratedMigrations.length > 0 ? 201 : 200;
     return response.status(statusCode).json(migratedMigrations);
   }
+  return response.status(405).end();
 }
