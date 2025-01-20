@@ -1,5 +1,6 @@
 services:
   database:
+    container_name: pg-dev
     image: "postgres:16-alpine"
     env_file: "../.env.development"
     ports:
