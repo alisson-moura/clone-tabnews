@@ -1,10 +1,14 @@
+import orchestrator from "tests/orchestrator.js";
 import database from "infra/database";
 
 async function cleanDatabase() {
   await database.query("DROP SCHEMA public CASCADE;CREATE SCHEMA public;");
 }
 
-beforeAll(cleanDatabase);
+beforeAll(async () => {
+  await cleanDatabase();
+  await orchestrator.waitForAllServices();
+});
 
 test("DELETE to /api/v1/migrations should return 405 Method Not Allowed", async () => {
   // Realiza uma requisição DELETE para um endpoint que não suporta este método
