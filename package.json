@@ -28,6 +28,8 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
     "concurrently": "^9.1.2",
     "dotenv": "^16.4.7",
     "eslint": "^8.57.0",
