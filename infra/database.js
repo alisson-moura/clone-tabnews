@@ -1,4 +1,4 @@
-import { Client } from "pg";
+import {Client} from "pg";
 
 async function getNewClient() {
   const client = new Client({
@@ -17,12 +17,11 @@ async function query(queryObject) {
   let client;
   try {
     client = await getNewClient();
-    const result = await client.query(queryObject);
-    return result;
+    return client.query(queryObject);
   } catch (error) {
     console.error(error);
   } finally {
-    await client.end();
+    await client?.end();
   }
 }
 
@@ -33,7 +32,7 @@ function getSSLValues() {
     };
   }
 
-  return process.env.NODE_ENV == "production" ? true : false;
+  return process.env.NODE_ENV === "production";
 }
 
 const database = {
