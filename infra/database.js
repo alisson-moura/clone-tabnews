@@ -17,8 +17,7 @@ async function query(queryObject) {
   let client;
   try {
     client = await getNewClient();
-    const result = await client.query(queryObject);
-    return result;
+    return await client.query(queryObject);
   } catch (error) {
     console.error(error);
   } finally {
@@ -33,7 +32,7 @@ function getSSLValues() {
     };
   }
 
-  return process.env.NODE_ENV == "production" ? true : false;
+  return process.env.NODE_ENV === "production";
 }
 
 const database = {
