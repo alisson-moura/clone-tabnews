@@ -1,5 +1,5 @@
 import database from "infra/database.js";
-import {InternalServerError} from "infra/errors";
+import { InternalServerError } from "infra/errors";
 
 export default async function status(request, response) {
   try {
@@ -21,8 +21,8 @@ export default async function status(request, response) {
       },
     });
   } catch (err) {
-    const publicError = new InternalServerError({cause: err})
-    console.log(publicError)
+    const publicError = new InternalServerError({ cause: err });
+    console.log(publicError);
     return response.status(500).json(publicError);
   }
 }

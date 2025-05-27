@@ -1,4 +1,4 @@
-import {Client} from "pg";
+import { Client } from "pg";
 
 async function getNewClient() {
   const client = new Client({
