@@ -17,11 +17,11 @@ async function query(queryObject) {
   let client;
   try {
     client = await getNewClient();
-    return client.query(queryObject);
+    return await client.query(queryObject);
   } catch (error) {
     console.error(error);
   } finally {
-    await client?.end();
+    await client.end();
   }
 }
 
