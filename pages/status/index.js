@@ -2,7 +2,12 @@ import useSWR from "swr";
 
 async function fetchAPI(key) {
   const response = await fetch(key);
-  return response.json();
+  if(response.ok) {
+    return response.json();
+  }
+
+  const error = await response.json()
+  throw new Error(error)
 }
 
 export default function StatusPage() {
@@ -16,11 +21,11 @@ export default function StatusPage() {
 }
 
 function UpdatedAt() {
-  const { data, isLoading } = useSWR("/api/v1/status", fetchAPI, {
+  const { data, isLoading, error } = useSWR("/api/v1/status", fetchAPI, {
     refreshInterval: 2000,
   });
 
-  let updatedAt = "Carregando...";
+  let updatedAt = error ? new Date().toISOString() : "Carregando...";
 
   if (!isLoading && data) {
     updatedAt = new Date(data.updated_at).toLocaleString("pt-BR");
@@ -30,9 +35,15 @@ function UpdatedAt() {
 }
 
 function Database() {
-  const { data, isLoading } = useSWR("/api/v1/status", fetchAPI, {
+  const { data, isLoading, error } = useSWR("/api/v1/status", fetchAPI, {
     refreshInterval: 2000,
   });
+
+  if(error) {
+    return(
+      <h1>Failed to load</h1>
+    )
+  }
 
   let version = "0.0";
   let maxConnections = 0;

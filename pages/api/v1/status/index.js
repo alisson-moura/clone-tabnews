@@ -22,7 +22,6 @@ export default async function status(request, response) {
     });
   } catch (err) {
     const publicError = new InternalServerError({ cause: err });
-    console.log(publicError);
     return response.status(500).json(publicError);
   }
 }
