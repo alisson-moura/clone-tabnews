@@ -2,12 +2,12 @@ import useSWR from "swr";
 
 async function fetchAPI(key) {
   const response = await fetch(key);
-  if(response.ok) {
+  if (response.ok) {
     return response.json();
   }
 
-  const error = await response.json()
-  throw new Error(error)
+  const error = await response.json();
+  throw new Error(error);
 }
 
 export default function StatusPage() {
@@ -39,10 +39,8 @@ function Database() {
     refreshInterval: 2000,
   });
 
-  if(error) {
-    return(
-      <h1>Failed to load</h1>
-    )
+  if (error) {
+    return <h1>Failed to load</h1>;
   }
 
   let version = "0.0";
