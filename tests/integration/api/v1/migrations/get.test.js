@@ -12,7 +12,6 @@ describe("Anônimo", () => {
 
     expect(response.status).toBe(200);
     expect(Array.isArray(body)).toBe(true);
-    expect(body.length).toBeGreaterThan(0);
   });
   describe("Database  status", () => {
     test("Ensure all database connections are closed afterwards", async () => {

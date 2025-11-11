@@ -6,9 +6,9 @@ beforeAll(async () => {
 });
 
 describe("Anônimo", () => {
-  test("DELETE /api/v1/migrations", async () => {
-    const response = await fetch("http://localhost:3000/api/v1/migrations", {
-      method: "DELETE",
+  test("POST /api/v1/status", async () => {
+    const response = await fetch("http://localhost:3000/api/v1/status", {
+      method: "POST",
     });
 
     const body = await response.json();
