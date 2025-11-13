@@ -21,6 +21,7 @@ class Migrator {
         direction: "up",
         migrationsTable: "pgmigrations",
         verbose: true,
+        log: () => {},
         dbClient,
         dryRun,
       });
