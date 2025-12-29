@@ -32,10 +32,12 @@ exports.up = (pgm) => {
     created_at: {
       type: "timestamptz",
       default: pgm.func("now()"),
+      notNull: true,
     },
     updated_at: {
       type: "timestamptz",
       default: pgm.func("now()"),
+      notNull: true,
     },
   });
 };
