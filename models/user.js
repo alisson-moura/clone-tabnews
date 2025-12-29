@@ -1,11 +1,29 @@
 import database from "infra/database";
-import { ValidationError } from "infra/errors";
+import { ValidationError, NotFoundError } from "infra/errors";
 
 async function create(userInputValues) {
   await validateUniqueEmail(userInputValues.email);
   await validateUniqueUsername(userInputValues.username);
   const user = await runInsert(userInputValues);
   return user;
+}
+
+async function findOneByUsername(username) {
+  const user = await validateUsernameExists(username);
+  return user;
+}
+
+async function validateUsernameExists(username) {
+  const result = await runSelectWithUsername(username);
+
+  if (result.rowCount === 0)
+    throw new NotFoundError({
+      message:
+        "Não foi possível encontrar um usuário com este username no sistema.",
+      action: "Verifique se o username está correto.",
+    });
+
+  return result.rows[0];
 }
 
 async function validateUniqueEmail(email) {
@@ -26,7 +44,16 @@ async function validateUniqueEmail(email) {
 }
 
 async function validateUniqueUsername(username) {
-  const result = await database.query({
+  const result = await runSelectWithUsername(username);
+  if (result.rowCount > 0)
+    throw new ValidationError({
+      message: "Este username já está em uso.",
+      action: "Tente outro username.",
+    });
+}
+
+async function runSelectWithUsername(username) {
+  const results = await database.query({
     text: `
         SELECT * FROM
             users
@@ -35,11 +62,7 @@ async function validateUniqueUsername(username) {
         `,
     values: [username],
   });
-  if (result.rowCount > 0)
-    throw new ValidationError({
-      message: "Este username já está em uso.",
-      action: "Tente outro username.",
-    });
+  return results;
 }
 
 async function runInsert(userInputValues) {
@@ -64,6 +87,7 @@ async function runInsert(userInputValues) {
 
 const user = {
   create,
+  findOneByUsername,
 };
 
 export default user;
