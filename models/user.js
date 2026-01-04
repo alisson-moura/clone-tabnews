@@ -15,6 +15,50 @@ async function findOneByUsername(username) {
   return user;
 }
 
+async function update(username, userInputValues) {
+  const currentUser = await findOneByUsername(username);
+
+  if (Object.hasOwn(userInputValues, "username")) {
+    const newUsername = userInputValues.username;
+
+    if (newUsername.toLowerCase() !== currentUser.username.toLowerCase())
+      await validateUniqueUsername(userInputValues.username);
+  }
+
+  if (Object.hasOwn(userInputValues, "email"))
+    await validateUniqueEmail(userInputValues.email);
+
+  if (Object.hasOwn(userInputValues, "password"))
+    await hashPasswordInObject(userInputValues);
+
+  const userWithNewValues = { ...currentUser, ...userInputValues };
+
+  const updatedUser = await runUpdateQuery(userWithNewValues);
+
+  return updatedUser;
+
+  async function runUpdateQuery(user) {
+    const results = await database.query({
+      text: `
+      UPDATE
+        users
+      SET
+        username = $2,
+        email = $3,
+        password = $4,
+        updated_at = timezone('utc', now())
+      WHERE
+        id = $1
+      RETURNING
+        *
+      `,
+      values: [user.id, user.username, user.email, user.password],
+    });
+
+    return results.rows[0];
+  }
+}
+
 async function hashPasswordInObject(userInputValues) {
   userInputValues.password = await password.hash(userInputValues.password);
 }
@@ -94,6 +138,7 @@ async function runInsert(userInputValues) {
 const user = {
   create,
   findOneByUsername,
+  update,
 };
 
 export default user;
