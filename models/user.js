@@ -1,9 +1,11 @@
 import database from "infra/database";
 import { ValidationError, NotFoundError } from "infra/errors";
+import password from "./password";
 
 async function create(userInputValues) {
   await validateUniqueEmail(userInputValues.email);
   await validateUniqueUsername(userInputValues.username);
+  await hashPasswordInObject(userInputValues);
   const user = await runInsert(userInputValues);
   return user;
 }
@@ -11,6 +13,54 @@ async function create(userInputValues) {
 async function findOneByUsername(username) {
   const user = await validateUsernameExists(username);
   return user;
+}
+
+async function update(username, userInputValues) {
+  const currentUser = await findOneByUsername(username);
+
+  if (Object.hasOwn(userInputValues, "username")) {
+    const newUsername = userInputValues.username;
+
+    if (newUsername.toLowerCase() !== currentUser.username.toLowerCase())
+      await validateUniqueUsername(userInputValues.username);
+  }
+
+  if (Object.hasOwn(userInputValues, "email"))
+    await validateUniqueEmail(userInputValues.email);
+
+  if (Object.hasOwn(userInputValues, "password"))
+    await hashPasswordInObject(userInputValues);
+
+  const userWithNewValues = { ...currentUser, ...userInputValues };
+
+  const updatedUser = await runUpdateQuery(userWithNewValues);
+
+  return updatedUser;
+
+  async function runUpdateQuery(user) {
+    const results = await database.query({
+      text: `
+      UPDATE
+        users
+      SET
+        username = $2,
+        email = $3,
+        password = $4,
+        updated_at = timezone('utc', now())
+      WHERE
+        id = $1
+      RETURNING
+        *
+      `,
+      values: [user.id, user.username, user.email, user.password],
+    });
+
+    return results.rows[0];
+  }
+}
+
+async function hashPasswordInObject(userInputValues) {
+  userInputValues.password = await password.hash(userInputValues.password);
 }
 
 async function validateUsernameExists(username) {
@@ -88,6 +138,7 @@ async function runInsert(userInputValues) {
 const user = {
   create,
   findOneByUsername,
+  update,
 };
 
 export default user;
