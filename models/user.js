@@ -15,6 +15,11 @@ async function findOneByUsername(username) {
   return user;
 }
 
+async function findOneByEmail(email) {
+  const user = await validateEmailExists(email);
+  return user;
+}
+
 async function update(username, userInputValues) {
   const currentUser = await findOneByUsername(username);
 
@@ -76,16 +81,21 @@ async function validateUsernameExists(username) {
   return result.rows[0];
 }
 
+async function validateEmailExists(email) {
+  const result = await runSelectWithEmail(email);
+
+  if (result.rowCount === 0)
+    throw new NotFoundError({
+      message:
+        "Não foi possível encontrar um usuário com este e-mail no sistema.",
+      action: "Verifique se o e-mail está correto.",
+    });
+
+  return result.rows[0];
+}
+
 async function validateUniqueEmail(email) {
-  const result = await database.query({
-    text: `
-        SELECT * FROM
-            users
-        WHERE
-            LOWER(email) = LOWER($1)
-        `,
-    values: [email],
-  });
+  const result = await runSelectWithEmail(email);
   if (result.rowCount > 0)
     throw new ValidationError({
       message: "Este email já está em uso.",
@@ -115,6 +125,19 @@ async function runSelectWithUsername(username) {
   return results;
 }
 
+async function runSelectWithEmail(email) {
+  const results = await database.query({
+    text: `
+        SELECT * FROM
+            users
+        WHERE
+            LOWER(email) = LOWER($1)
+        `,
+    values: [email],
+  });
+  return results;
+}
+
 async function runInsert(userInputValues) {
   const results = await database.query({
     text: `
@@ -138,6 +161,7 @@ async function runInsert(userInputValues) {
 const user = {
   create,
   findOneByUsername,
+  findOneByEmail,
   update,
 };
 
