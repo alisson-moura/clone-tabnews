@@ -158,10 +158,31 @@ async function runInsert(userInputValues) {
   return results.rows[0];
 }
 
+async function findOneById(id) {
+  const results = await database.query({
+    text: `
+        SELECT * FROM
+            users
+        WHERE
+            id = $1
+        LIMIT 1
+        `,
+    values: [id],
+  });
+  if (results.rowCount === 0)
+    throw new NotFoundError({
+      message: "Não foi possível encontrar um usuário com este id no sistema.",
+      action: "Verifique se o id está correto.",
+    });
+
+  return results.rows[0];
+}
+
 const user = {
   create,
   findOneByUsername,
   findOneByEmail,
+  findOneById,
   update,
 };
 
