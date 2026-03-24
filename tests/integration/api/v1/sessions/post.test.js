@@ -12,7 +12,7 @@ beforeEach(async () => {
   await orchestrator.runMigrations();
 });
 
-describe("POST /api/v1/status", () => {
+describe("POST /api/v1/sessions", () => {
   describe("Usuário Anônimo", () => {
     test("Com e-mail incorreto mas com a senha correta", async () => {
       await orchestrator.createUser({
