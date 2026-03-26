@@ -6,8 +6,11 @@ import migrator from "models/migrator";
 import user from "models/user";
 import { session } from "models/session";
 
+const emailServiceURL = `http://${process.env.EMAIL_API_HOST}:${process.env.EMAIL_API_PORT}`;
+
 async function waitForAllServices() {
   await waitForWebServer();
+  await waitForEmailServer();
 
   async function waitForWebServer() {
     return retry(fetchStatusPage, { retries: 100, maxTimeout: 1000 });
@@ -19,10 +22,45 @@ async function waitForAllServices() {
       }
     }
   }
+
+  async function waitForEmailServer() {
+    return retry(fetchStatusPage, { retries: 100, maxTimeout: 1000 });
+
+    async function fetchStatusPage() {
+      const response = await fetch(`${emailServiceURL}/messages`);
+      if (response.status !== 200) {
+        throw Error();
+      }
+    }
+  }
 }
 
 async function clearDatabase() {
   await database.query("DROP SCHEMA public CASCADE;CREATE SCHEMA public;");
+}
+
+async function deleteAllEmails() {
+  await fetch(`${emailServiceURL}/messages`, { method: "DELETE" });
+}
+
+async function getLastEmail() {
+  const messagesResponse = await fetch(`${emailServiceURL}/messages`);
+  const messages = await messagesResponse.json();
+
+  if (messages.length === 0) {
+    return null;
+  }
+
+  const lastMessage = messages.pop();
+  const messageResponse = await fetch(
+    `${emailServiceURL}/messages/${lastMessage.id}.plain`,
+  );
+  const text = await messageResponse.text();
+
+  return {
+    ...lastMessage,
+    text,
+  };
 }
 
 async function runMigrations() {
@@ -48,5 +86,7 @@ const orchestrator = {
   runMigrations,
   createUser,
   createSession,
+  deleteAllEmails,
+  getLastEmail,
 };
 export default orchestrator;
