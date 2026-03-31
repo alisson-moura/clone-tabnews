@@ -16,6 +16,24 @@ async function create(userInputValues) {
   }
 }
 
+async function setFeatures(id, features) {
+  const result = await database.query({
+    text: `
+      UPDATE 
+        users
+      SET 
+        features = $2,
+        updated_at = timezone('utc', now())
+      WHERE id = $1
+      RETURNING
+        *
+    `,
+    values: [id, features],
+  });
+
+  return result.rows[0];
+}
+
 async function findOneByUsername(username) {
   const user = await validateUsernameExists(username);
   return user;
@@ -191,6 +209,7 @@ const user = {
   findOneByEmail,
   findOneById,
   update,
+  setFeatures,
 };
 
 export default user;
