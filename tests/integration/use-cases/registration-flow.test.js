@@ -1,5 +1,7 @@
 import orchestrator from "tests/orchestrator";
+import utils from "tests/utils";
 import activation from "models/activation";
+import webserver from "infra/webserver";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -37,14 +39,20 @@ describe("Use Case: Registration Flow", () => {
 
     test("Receber um e-mail de ativação", async () => {
       const lastEmail = await orchestrator.getLastEmail();
-      const activationToken = await activation.findOneByUserId(
-        createUserBody.id,
+      
+      const activationToken = await activation.findOneValidById(
+        utils.extractUUIDFromText(lastEmail.text)
       );
 
       expect(lastEmail.recipients).toContain("<tester@example.com>");
       expect(lastEmail.subject).toBe("Ative sua conta no Clone TabNews");
       expect(lastEmail.text).toMatch(/user.tester/i);
-      expect(lastEmail.text).toContain(activationToken.id);
+      
+      expect(lastEmail.text).toContain(
+        `${webserver.origin}/cadastro/ativar/${activationToken.id}`
+      );
+      expect(activationToken.user_id).toEqual(createUserBody.id);
+      expect(activationToken.used_at).toBeNull();
     });
 
     test.todo("Ativar a conta de usuário");

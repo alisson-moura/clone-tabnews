@@ -35,14 +35,24 @@ async function createActivationToken(userId) {
   }
 }
 
-async function findOneByUserId(userId) {
+async function findOneValidById(tokenId) {
   const result = await database.query({
     text: `
-      SELECT * FROM user_activation_tokens
-      WHERE user_id = $1
+      SELECT * FROM 
+        user_activation_tokens
+      WHERE id = $1
+       AND used_at IS NULL
+       AND expires_at > NOW()
     `,
-    values: [userId],
+    values: [tokenId],
   });
+
+  if (result.rowCount === 0) {
+    throw new NotFoundError({
+      message: "O token de ativação é inválido ou expirou.",
+      action: "faça uma nova solicitação de ativação",
+    });
+  }
 
   return result.rows[0];
 }
@@ -50,6 +60,6 @@ async function findOneByUserId(userId) {
 const activation = {
   sendActivationEmailToUser,
   createActivationToken,
-  findOneByUserId,
+  findOneValidById,
 };
 export default activation;
