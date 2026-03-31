@@ -73,7 +73,24 @@ describe("Use Case: Registration Flow", () => {
       expect(activatedUser.features).toEqual(["create:session"]);
     });
 
-    test.todo("Fazer login com a conta de usuário");
+    test("Fazer login com a conta de usuário", async () => {
+      const sessionResponse = await fetch(
+        `${webserver.origin}/api/v1/sessions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: "tester@example.com",
+            password: "password@123",
+          }),
+        },
+      );
+
+      expect(sessionResponse.status).toBe(201);
+    });
+
     test.todo("Acessar informações do usuário");
   });
 });

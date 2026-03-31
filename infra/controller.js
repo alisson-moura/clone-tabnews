@@ -7,6 +7,8 @@ import {
   UnauthorizedError,
   ValidationError,
 } from "infra/errors";
+import user from "models/user";
+import { ForbiddenError } from "infra/errors";
 
 function onNoMatchHandler(request, response) {
   const publicError = new MethodNotAllowedError();
@@ -17,7 +19,8 @@ function onErrorHandler(err, request, response) {
   if (
     err instanceof ValidationError ||
     err instanceof NotFoundError ||
-    err instanceof UnauthorizedError
+    err instanceof UnauthorizedError ||
+    err instanceof ForbiddenError
   )
     return response.status(err.statusCode).json(err);
 
@@ -51,6 +54,49 @@ function clearSessionCookie(response) {
   response.setHeader("Set-Cookie", setCookie);
 }
 
+async function injectAnonymousOrUser(request, response, next) {
+  if (request.cookies?.session_id) {
+    await injectAuthenticatedUser(request);
+  } else {
+    injectAnonymousUser(request);
+  }
+
+  return next();
+}
+
+async function injectAuthenticatedUser(request) {
+  const token = request.cookies.session_id;
+  const validSession = await session.findOneValidByToken(token);
+  const authenticatedUser = user.findOneById(validSession.user_id);
+
+  request.context = {
+    ...request.context,
+    user: authenticatedUser,
+  };
+}
+
+async function injectAnonymousUser(request) {
+  request.context = {
+    ...request.context,
+    user: {
+      features: ["create:session", "read:activation_token", "create:user"],
+    },
+  };
+}
+
+function canRequest(feature) {
+  return async function (request, response, next) {
+    const { user } = request.context;
+
+    if (user.features.includes(feature)) return next();
+
+    throw new ForbiddenError({
+      message: "Você não tem permissão para executar essa ação.",
+      action: "Verifique se o seu usuário tem a feature: " + feature,
+    });
+  };
+}
+
 const controller = {
   errorHandler: {
     onNoMatch: onNoMatchHandler,
@@ -58,6 +104,8 @@ const controller = {
   },
   setSessionCookie,
   clearSessionCookie,
+  injectAnonymousOrUser,
+  canRequest,
 };
 
 export default controller;
