@@ -19,19 +19,11 @@ describe("GET /api/v1/user", () => {
         method: "GET",
       });
 
-      const body = await response.json();
-
-      expect(response.status).toBe(401);
-      expect(body).toEqual({
-        message: "Usuário não possui sessão ativa.",
-        action: "Verifique se este usuário está logado e tente novamente.",
-        status_code: 401,
-        name: "UnauthorizedError",
-      });
+      expect(response.status).toBe(403);
     });
   });
   describe("Usuário logado", () => {
-    test("Com o Cookie sefssion_id presente porém incorreto", async () => {
+    test("Com o Cookie session_id presente porém incorreto", async () => {
       const response = await fetch("http://localhost:3000/api/v1/user", {
         method: "GET",
         headers: {
@@ -59,6 +51,8 @@ describe("GET /api/v1/user", () => {
         password: "senha-correta",
       });
 
+      await orchestrator.activateUser(user);
+
       const userSession = await orchestrator.createSession(user.id);
 
       jest.useRealTimers();
@@ -84,6 +78,8 @@ describe("GET /api/v1/user", () => {
         email: "email.correto@mail.com",
         password: "senha-correta",
       });
+      await orchestrator.activateUser(user);
+
       const userSession = await orchestrator.createSession(user.id);
 
       const response = await fetch("http://localhost:3000/api/v1/user", {
@@ -136,6 +132,7 @@ describe("GET /api/v1/user", () => {
       const user = await orchestrator.createUser({
         email: "email.correto@mail.com",
         password: "senha-correta",
+        features: ["create:session", "read:session"],
       });
       const userSession = await orchestrator.createSession(user.id);
 

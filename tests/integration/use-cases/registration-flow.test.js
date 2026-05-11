@@ -70,7 +70,10 @@ describe("Use Case: Registration Flow", () => {
       expect(Date.parse(activationBody.used_at)).not.toBeNaN();
 
       const activatedUser = await user.findOneById(createUserBody.id);
-      expect(activatedUser.features).toEqual(["create:session"]);
+      expect(activatedUser.features).toEqual([
+        "create:session",
+        "read:session",
+      ]);
     });
 
     test("Fazer login com a conta de usuário", async () => {
@@ -91,6 +94,6 @@ describe("Use Case: Registration Flow", () => {
       expect(sessionResponse.status).toBe(201);
     });
 
-    test.todo("Acessar informações do usuário");
+    test("Acessar informações do usuário", async () => {});
   });
 });

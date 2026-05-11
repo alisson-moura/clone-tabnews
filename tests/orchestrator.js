@@ -5,6 +5,7 @@ import database from "infra/database";
 import migrator from "models/migrator";
 import user from "models/user";
 import { session } from "models/session";
+import activation from "models/activation";
 
 const emailServiceURL = `http://${process.env.EMAIL_API_HOST}:${process.env.EMAIL_API_PORT}`;
 
@@ -68,12 +69,21 @@ async function runMigrations() {
 }
 
 async function createUser(userInput = {}) {
-  return await user.create({
+  const userCreated = await user.create({
     username:
       userInput.username || faker.internet.username().replace(/[_.-]/g, ""),
     email: userInput.email || faker.internet.email(),
     password: userInput.password || "senha_padrao",
   });
+
+  if (userInput?.features?.length > 0)
+    return await user.setFeatures(userCreated.id, userInput.features);
+
+  return userCreated;
+}
+
+async function activateUser(inactiveUser) {
+  return await activation.activateUserByUserId(inactiveUser.id);
 }
 
 async function createSession(userId) {
@@ -85,6 +95,7 @@ const orchestrator = {
   clearDatabase,
   runMigrations,
   createUser,
+  activateUser,
   createSession,
   deleteAllEmails,
   getLastEmail,

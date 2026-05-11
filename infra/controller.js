@@ -9,6 +9,7 @@ import {
 } from "infra/errors";
 import user from "models/user";
 import { ForbiddenError } from "infra/errors";
+import authorization from "models/authorization";
 
 function onNoMatchHandler(request, response) {
   const publicError = new MethodNotAllowedError();
@@ -67,11 +68,12 @@ async function injectAnonymousOrUser(request, response, next) {
 async function injectAuthenticatedUser(request) {
   const token = request.cookies.session_id;
   const validSession = await session.findOneValidByToken(token);
-  const authenticatedUser = user.findOneById(validSession.user_id);
+  const authenticatedUser = await user.findOneById(validSession.user_id);
 
   request.context = {
     ...request.context,
     user: authenticatedUser,
+    session: validSession,
   };
 }
 
@@ -88,7 +90,7 @@ function canRequest(feature) {
   return async function (request, response, next) {
     const { user } = request.context;
 
-    if (user.features.includes(feature)) return next();
+    if (authorization.can(user, feature)) return next();
 
     throw new ForbiddenError({
       message: "Você não tem permissão para executar essa ação.",
