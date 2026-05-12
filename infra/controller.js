@@ -90,6 +90,8 @@ function canRequest(feature) {
   return async function (request, response, next) {
     const { user } = request.context;
 
+    console.log(user);
+
     if (authorization.can(user, feature)) return next();
 
     throw new ForbiddenError({

@@ -11,18 +11,47 @@ beforeAll(async () => {
 beforeEach(async () => {
   await orchestrator.clearDatabase();
   await orchestrator.runMigrations();
-
-  defaultUser = await orchestrator.createUser();
 });
 
 describe("PATCH /api/v1/users", () => {
-  describe("Anônimo", () => {
+  describe("Com usuário Anônimo", () => {
+    test("Com username unico", async () => {
+      const createdUser = await orchestrator.createUser();
+      await orchestrator.activateUser(createdUser);
+
+      const response = await fetch(
+        `http://localhost:3000/api/v1/users/${createdUser.username}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            username: "novoUsername",
+          }),
+        },
+      );
+
+      expect(response.status).toBe(403);
+    });
+  });
+
+  describe("Com usuário logado (default user)", () => {
+    let createdUser;
+    let session;
+
+    beforeEach(async () => {
+      createdUser = await orchestrator.createUser();
+      await orchestrator.activateUser(createdUser);
+      session = await orchestrator.createSession(createdUser.id);
+    });
+
     test("Com username inexistente", async () => {
       const response = await fetch(
         "http://localhost:3000/api/v1/users/username-inexistente",
         {
           method: "PATCH",
           body: JSON.stringify({}),
+          headers: {
+            Cookie: `session_id=${session.token}`,
+          },
         },
       );
       const responseBody = await response.json();
@@ -38,17 +67,22 @@ describe("PATCH /api/v1/users", () => {
     });
 
     test("Com username duplicado", async () => {
-      await orchestrator.createUser({
-        username: "usernameDuplicado",
-      });
+      const createdUserTwo = await orchestrator.createUser();
+      await orchestrator.activateUser(createdUserTwo);
+      const currentSession = await orchestrator.createSession(
+        createdUserTwo.id,
+      );
 
       const response = await fetch(
-        `http://localhost:3000/api/v1/users/${defaultUser.username}`,
+        `http://localhost:3000/api/v1/users/${createdUserTwo.username}`,
         {
           method: "PATCH",
           body: JSON.stringify({
-            username: "usernameDuplicado",
+            username: createdUser.username,
           }),
+          headers: {
+            Cookie: `session_id=${currentSession.token}`,
+          },
         },
       );
       const responseBody = await response.json();
@@ -63,19 +97,25 @@ describe("PATCH /api/v1/users", () => {
     });
 
     test("Com e-mail duplicado", async () => {
-      await orchestrator.createUser({
-        email: "emailduplicado@mail.com",
-      });
+      const createdUserTwo = await orchestrator.createUser();
+      await orchestrator.activateUser(createdUserTwo);
+      const currentSession = await orchestrator.createSession(
+        createdUserTwo.id,
+      );
 
       const response = await fetch(
-        `http://localhost:3000/api/v1/users/${defaultUser.username}`,
+        `http://localhost:3000/api/v1/users/${createdUserTwo.username}`,
         {
           method: "PATCH",
           body: JSON.stringify({
-            email: "emailduplicado@mail.com",
+            email: createdUser.email,
           }),
+          headers: {
+            Cookie: `session_id=${currentSession.token}`,
+          },
         },
       );
+
       const responseBody = await response.json();
 
       expect(response.status).toBe(400);
@@ -89,12 +129,15 @@ describe("PATCH /api/v1/users", () => {
 
     test("Com username unico", async () => {
       const response = await fetch(
-        `http://localhost:3000/api/v1/users/${defaultUser.username}`,
+        `http://localhost:3000/api/v1/users/${createdUser.username}`,
         {
           method: "PATCH",
           body: JSON.stringify({
             username: "novoUsername",
           }),
+          headers: {
+            Cookie: `session_id=${session.token}`,
+          },
         },
       );
       const responseBody = await response.json();
@@ -106,12 +149,15 @@ describe("PATCH /api/v1/users", () => {
 
     test("Com email unico", async () => {
       const response = await fetch(
-        `http://localhost:3000/api/v1/users/${defaultUser.username}`,
+        `http://localhost:3000/api/v1/users/${createdUser.username}`,
         {
           method: "PATCH",
           body: JSON.stringify({
             email: "novoEmail@curso.dev.com",
           }),
+          headers: {
+            Cookie: `session_id=${session.token}`,
+          },
         },
       );
       const responseBody = await response.json();
@@ -123,12 +169,15 @@ describe("PATCH /api/v1/users", () => {
 
     test("Com uma senha nova", async () => {
       const response = await fetch(
-        `http://localhost:3000/api/v1/users/${defaultUser.username}`,
+        `http://localhost:3000/api/v1/users/${createdUser.username}`,
         {
           method: "PATCH",
           body: JSON.stringify({
             password: "novaSenha",
           }),
+          headers: {
+            Cookie: `session_id=${session.token}`,
+          },
         },
       );
       const responseBody = await response.json();
@@ -136,7 +185,7 @@ describe("PATCH /api/v1/users", () => {
       expect(response.status).toBe(200);
       expect(responseBody.updated_at > responseBody.created_at).toBe(true);
 
-      const userInDb = await user.findOneByUsername(defaultUser.username);
+      const userInDb = await user.findOneByUsername(createdUser.username);
       const correctPasswordMatch = await password.compare(
         "novaSenha",
         userInDb.password,
