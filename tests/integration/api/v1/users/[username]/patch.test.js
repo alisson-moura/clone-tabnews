@@ -198,5 +198,35 @@ describe("PATCH /api/v1/users", () => {
       expect(correctPasswordMatch).toBe(true);
       expect(incorrectPasswordMatch).toBe(false);
     });
+
+    test("Um usuário tentando alterar dados de outro usuário", async () => {
+      const createdUserTwo = await orchestrator.createUser();
+      await orchestrator.activateUser(createdUserTwo);
+      const currentSession = await orchestrator.createSession(
+        createdUserTwo.id,
+      );
+
+      const response = await fetch(
+        `http://localhost:3000/api/v1/users/${createdUser.username}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            username: "novo_username",
+          }),
+          headers: {
+            Cookie: `session_id=${currentSession.token}`,
+          },
+        },
+      );
+      const responseBody = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(responseBody).toMatchObject({
+        action: "Verifique se possui a feature necessária.",
+        message: "Você não possui permissão para editar outro usuário.",
+        name: "ForbiddenError",
+        status_code: 403,
+      });
+    });
   });
 });
