@@ -229,4 +229,40 @@ describe("PATCH /api/v1/users", () => {
       });
     });
   });
+
+  describe("Com usuário privelegiado `update:user:others`", () => {
+    test("Usuário privelegiado atualizando outro usuário", async () => {
+      const privilegedUser = await orchestrator.createUser();
+      await orchestrator.activateUser(privilegedUser);
+      await orchestrator.addFeaturesToUser(privilegedUser, [
+        "update:user:others",
+      ]);
+      const privilegedUserSession = await orchestrator.createSession(
+        privilegedUser.id,
+      );
+
+      const defaultUser = await orchestrator.createUser();
+
+      const response = await fetch(
+        `http://localhost:3000/api/v1/users/${defaultUser.username}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            username: "novo_username",
+          }),
+          headers: {
+            Cookie: `session_id=${privilegedUserSession.token}`,
+          },
+        },
+      );
+      const responseBody = await response.json();
+
+      expect(response.status).toBe(200);
+
+      expect(responseBody).toMatchObject({
+        id: defaultUser.id,
+        username: "novo_username",
+      });
+    });
+  });
 });
